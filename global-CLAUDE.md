@@ -11,7 +11,7 @@
 - Always create a git branch before making changes
 - Run typecheck/lint after every file change
 - Write tests alongside implementation, not after
-- Commit after each logical unit of work
+- Commit after each logical unit of work — chunk changes into small, focused commits (e.g., schema changes, then lib helpers, then API routes, then UI) rather than one large commit at the end
 - Use /clear between major phases to manage context
 
 ## Communication
