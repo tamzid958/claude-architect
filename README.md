@@ -6,7 +6,7 @@ A plug-and-play framework for generating projects with Claude Code CLI — optim
 
 ### Changelog
 
-- **1.0.0** — Initial release. Scaffold, plan, review commands. Global CLAUDE.md. Full README with model selection, MCP servers, CI/CD, and troubleshooting.
+- **1.0.0** — Initial release. Scaffold, onboard, plan, review commands. Global CLAUDE.md. Full README with model selection, MCP servers, CI/CD, onboarding guide, and troubleshooting.
 
 ---
 
@@ -15,7 +15,8 @@ A plug-and-play framework for generating projects with Claude Code CLI — optim
 | File | Location | Purpose |
 |------|----------|---------|
 | `global-CLAUDE.md` | `~/.claude/CLAUDE.md` | Lightweight defaults loaded every session (~25 lines) |
-| `scaffold.md` | `~/.claude/commands/scaffold.md` | Full scaffolding protocol loaded only when you invoke `/scaffold` |
+| `scaffold.md` | `~/.claude/commands/scaffold.md` | Full scaffolding protocol for new projects (`/scaffold`) |
+| `onboard.md` | `~/.claude/commands/onboard.md` | Onboard existing projects — analyze, generate docs (`/onboard`) |
 | `plan.md` | `~/.claude/commands/plan.md` | Standalone planning command for features and changes (`/plan`) |
 | `review.md` | `~/.claude/commands/review.md` | Code review command for PRs, branches, or specific files (`/review`) |
 
@@ -35,6 +36,7 @@ mkdir -p ~/.claude/commands
 
 # 4. Copy all commands (loaded only when invoked)
 cp scaffold.md ~/.claude/commands/scaffold.md
+cp onboard.md ~/.claude/commands/onboard.md
 cp plan.md ~/.claude/commands/plan.md
 cp review.md ~/.claude/commands/review.md
 ```
@@ -47,7 +49,7 @@ Verify it works:
 # Open Claude Code in any directory
 claude
 
-# Type /scaffold, /plan, or /review and hit Tab — you should see them autocomplete
+# Type /scaffold, /onboard, /plan, or /review and hit Tab — you should see them autocomplete
 ```
 
 ---
@@ -89,7 +91,7 @@ Claude implements one phase at a time, running build + lint + tests after each. 
 
 Claude finishes with a summary, working app, and initial git commit.
 
-> **`/scaffold` vs `/init`:** Claude Code has a built-in `/init` command that auto-generates a CLAUDE.md by analyzing an existing codebase. Use `/init` when you already have code and want Claude to learn your conventions. Use `/scaffold` when you're generating a new project from scratch — it creates the code AND the CLAUDE.md together.
+> **`/scaffold` vs `/onboard` vs `/init`:** Use `/scaffold` when creating a new project from scratch. Use `/onboard` when you have an existing codebase and want Claude to deeply understand it (generates CLAUDE.md + docs/ + hooks). Use `/init` (built-in) when you just want a quick CLAUDE.md without the full analysis.
 
 ---
 
@@ -512,6 +514,92 @@ You can also request it explicitly:
 
 ---
 
+## Onboarding an Existing Project
+
+Already have a codebase? Use `/onboard` to get Claude up to speed before you start building.
+
+### How It Works
+
+```bash
+cd your-existing-project
+claude
+```
+
+```
+/onboard
+```
+
+Claude will:
+
+1. **Analyze** — scan your stack, directory structure, code patterns, commands, and git history
+2. **Report** — show you everything it detected and ask for approval
+3. **Generate CLAUDE.md** — project conventions, commands, key files, detected patterns
+4. **Generate docs/** — architecture overview, code conventions, API patterns (where relevant)
+5. **Offer hooks + permissions** — automatic lint/test on edit, pre-approved safe commands
+
+### What Gets Created
+
+```
+your-project/
+├── CLAUDE.md                  ← generated from analysis (new)
+├── docs/
+│   ├── architecture.md        ← system architecture (new)
+│   ├── conventions.md         ← code style & patterns (new)
+│   └── api-patterns.md        ← API conventions (new, if applicable)
+├── .claude/
+│   ├── hooks.json             ← auto quality checks (optional)
+│   └── settings.json          ← permission allowlists (optional)
+└── [your existing code — untouched]
+```
+
+> **Important:** `/onboard` never modifies your existing source code. It only creates new files (CLAUDE.md, docs/, .claude/). If any of these already exist, Claude will ask before overwriting.
+
+### When to Use `/onboard` vs `/init` vs `/scaffold`
+
+| Command | Use When |
+|---------|----------|
+| `/onboard` | You have an existing project and want Claude to deeply understand it — generates CLAUDE.md + docs + hooks |
+| `/init` | You have an existing project and just want a quick CLAUDE.md (built-in, lighter than /onboard) |
+| `/scaffold` | You're creating a new project from scratch |
+
+### After Onboarding
+
+1. **Review CLAUDE.md** — fix anything Claude got wrong about your conventions
+2. **Run `/review`** — get an initial code health check on your project
+3. **Start building** — use `/plan [feature]` to plan your next feature
+
+### Example
+
+```
+$ cd ~/projects/my-saas-app
+$ claude
+
+> /onboard
+
+🔍 Project Analysis: my-saas-app
+
+Stack: TypeScript 5.3 + Next.js 14 + Prisma + PostgreSQL
+Architecture: Feature-based with shared lib/
+Commands: npm run dev, npm run build, npm run test (vitest), npm run lint (eslint)
+Tests: 47 test files in __tests__/, vitest + React Testing Library
+Git: main branch, clean, last commit 2 days ago
+
+I'll now generate CLAUDE.md and project docs. Proceed?
+
+> yes
+
+✅ Project Onboarded: my-saas-app
+Generated: CLAUDE.md, docs/architecture.md, docs/conventions.md, docs/api-patterns.md
+Want me to add hooks and permissions? Say "add hooks" or skip.
+
+> add hooks
+
+✅ Added .claude/hooks.json — eslint auto-fix on save, build + test before commit.
+Ready to build. Try: /plan [your next feature]
+```
+
+---
+
 ## After Scaffolding — What Next?
 
 The scaffold gives you a working foundation. Here's how to keep building efficiently:
@@ -538,12 +626,14 @@ Update CLAUDE.md based on patterns you've seen me correct
 
 | Command | What It Does |
 |---------|-------------|
+| `/scaffold` | Generate a new project from scratch |
+| `/onboard` | Analyze an existing project and generate CLAUDE.md + docs |
+| `/plan` | Create an implementation plan for a feature or change |
+| `/review` | Review code for bugs, security, performance, and style |
 | `/clear` | Reset context when conversation gets long |
 | `#` key | Add a quick note to CLAUDE.md mid-session |
 | `/compact` | Summarize conversation to save context |
-| `/plan` | Create an implementation plan for a feature or change |
-| `/review` | Review code for bugs, security, performance, and style |
-| `/init` | Auto-generate CLAUDE.md from existing codebase (built-in) |
+| `/init` | Auto-generate CLAUDE.md from existing codebase (built-in, lighter than /onboard) |
 
 ---
 
@@ -592,9 +682,10 @@ claude mcp add postgres -- npx @anthropic-ai/mcp-server-postgres postgresql://lo
 ├── CLAUDE.md                  ← global defaults (loaded every session)
 ├── CLAUDE.md.bak              ← backup of your previous CLAUDE.md (if any)
 └── commands/
-    ├── scaffold.md            ← project scaffolding protocol (/scaffold)
-    ├── plan.md                ← standalone planning command (/plan)
-    └── review.md              ← code review command (/review)
+    ├── scaffold.md            ← new project scaffolding (/scaffold)
+    ├── onboard.md             ← existing project onboarding (/onboard)
+    ├── plan.md                ← feature planning (/plan)
+    └── review.md              ← code review (/review)
 
 your-project/
 ├── CLAUDE.md                  ← project-specific (generated by /scaffold)
