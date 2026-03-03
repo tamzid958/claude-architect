@@ -93,7 +93,10 @@ Files created: [count] | Tests: [count] passing
 ### Next Steps
 - [suggested first feature]
 - /plan [feature] — plan before building
+- /test — add test coverage
+- /deploy — generate deployment config
 - /review — code health check
+- /secure — security audit
 ```
 
 ---

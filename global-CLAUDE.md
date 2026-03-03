@@ -12,8 +12,8 @@ Install to `~/.claude/CLAUDE.md` — loads automatically in all sessions.
 ## Model Guidance
 
 - **Planning / Analysis** → Opus | **Execution / Implementation** → Sonnet
-- `/plan`, `/review`, `/onboard` → Opus | `/scaffold` implementation → Sonnet
-- Complex debugging → Opus | Straightforward features → Sonnet
+- Opus: `/plan`, `/review`, `/onboard`, `/debug`, `/migrate`, `/secure`, `/perf`
+- Sonnet: `/scaffold`, `/refactor`, `/test`, `/deploy`, `/doc`, `/api`, `/component`, `/deps`
 
 ## Code Quality
 

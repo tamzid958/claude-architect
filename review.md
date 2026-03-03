@@ -90,3 +90,11 @@ If user says "fix it" / "apply fixes":
 2. Run build + lint + test
 3. Show summary of changes
 4. Don't touch unflagged code
+
+## AFTER REVIEW
+Suggest relevant next commands based on findings:
+- /test — if coverage gaps found
+- /refactor — if structural issues flagged
+- /secure — if security concerns raised
+- /perf — if performance issues noted
+- /deps — if dependency issues found

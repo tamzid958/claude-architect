@@ -2,13 +2,12 @@
 
 A plug-and-play framework for generating projects with Claude Code CLI — optimized for speed, token efficiency, and consistent output across any language or framework.
 
-**Version:** 3.0.0 | **Last Updated:** March 2026 | **License:** MIT
+**Version:** 2.0.0 | **Last Updated:** March 2026 | **License:** MIT
 
 ### Changelog
 
-- **3.0.0** — 70% token reduction via delta-only framework files, merged similar frameworks (Express+Hono, Gin+Echo+Fiber, Actix+Axum+Rocket, React Native+Expo), inheritance model (global → _base → framework), no pinned versions ("latest stable" everywhere), compressed protocol files with error recovery and framework pitfall integration. 32 framework files across 12 ecosystems.
-- **2.0.0** — Full framework knowledge base (47 files). Framework-specific detection, conventions, and CLAUDE.md templates. Senior architect personas. Clarification-first protocol. Model guidance.
-- **1.0.0** — Initial release. Scaffold, onboard, plan, review commands. Global CLAUDE.md.
+- **2.0.0** — 15 commands, 32 framework files across 12 ecosystems. 70% token reduction via delta-only framework files, merged similar frameworks (Express+Hono, Gin+Echo+Fiber, Actix+Axum+Rocket, React Native+Expo), inheritance model (global → _base → framework), no pinned versions ("latest stable" everywhere). Full developer lifecycle: `/scaffold`, `/onboard`, `/plan`, `/review`, `/migrate`, `/debug`, `/refactor`, `/test`, `/deploy`, `/doc`, `/api`, `/component`, `/secure`, `/deps`, `/perf`.
+- **1.0.0** — Initial release. Scaffold, onboard, plan, review commands. Global CLAUDE.md. Full framework knowledge base.
 
 ---
 
@@ -21,6 +20,17 @@ A plug-and-play framework for generating projects with Claude Code CLI — optim
 | `onboard.md` | `~/.claude/commands/onboard.md` | Onboard existing projects (`/onboard`) |
 | `plan.md` | `~/.claude/commands/plan.md` | Feature/change planning (`/plan`) |
 | `review.md` | `~/.claude/commands/review.md` | Code review for PRs/branches/files (`/review`) |
+| `migrate.md` | `~/.claude/commands/migrate.md` | Framework/version migration (`/migrate`) |
+| `debug.md` | `~/.claude/commands/debug.md` | Structured debugging protocol (`/debug`) |
+| `refactor.md` | `~/.claude/commands/refactor.md` | Safe refactoring with framework awareness (`/refactor`) |
+| `test.md` | `~/.claude/commands/test.md` | Generate tests for existing code (`/test`) |
+| `deploy.md` | `~/.claude/commands/deploy.md` | Generate deployment configs (`/deploy`) |
+| `doc.md` | `~/.claude/commands/doc.md` | Generate documentation from code (`/doc`) |
+| `api.md` | `~/.claude/commands/api.md` | Generate API endpoints (`/api`) |
+| `component.md` | `~/.claude/commands/component.md` | Generate UI components (`/component`) |
+| `secure.md` | `~/.claude/commands/secure.md` | Security audit (`/secure`) |
+| `deps.md` | `~/.claude/commands/deps.md` | Dependency management (`/deps`) |
+| `perf.md` | `~/.claude/commands/perf.md` | Performance optimization (`/perf`) |
 | `frameworks/` | `~/.claude/commands/frameworks/` | **32 framework files** + 13 base files + detection matrix |
 
 ### Inheritance Model
@@ -56,6 +66,13 @@ Each framework file: senior architect persona, detection signals, commands, conv
 
 ## Installation
 
+### Quick Install
+```bash
+bash install.sh
+```
+
+### Manual Install
+
 ```bash
 # 1. Back up existing global CLAUDE.md
 [ -f ~/.claude/CLAUDE.md ] && cp ~/.claude/CLAUDE.md ~/.claude/CLAUDE.md.bak
@@ -67,16 +84,29 @@ cp global-CLAUDE.md ~/.claude/CLAUDE.md
 mkdir -p ~/.claude/commands
 
 # 4. Copy commands (loaded when invoked)
-cp scaffold.md onboard.md plan.md review.md ~/.claude/commands/
+cp scaffold.md onboard.md plan.md review.md migrate.md debug.md refactor.md test.md deploy.md doc.md api.md component.md secure.md deps.md perf.md ~/.claude/commands/
 
 # 5. Copy framework knowledge base
 cp -r frameworks/ ~/.claude/commands/frameworks/
 ```
 
+### Update
+```bash
+bash install.sh
+```
+Re-running the install script updates all commands and frameworks. Your `~/.claude/CLAUDE.md` is backed up automatically.
+
+### Uninstall
+```bash
+rm -f ~/.claude/commands/{scaffold,onboard,plan,review,migrate,debug,refactor,test,deploy,doc,api,component,secure,deps,perf}.md
+rm -rf ~/.claude/commands/frameworks/
+# Restore backup if desired: cp ~/.claude/CLAUDE.md.bak ~/.claude/CLAUDE.md
+```
+
 Verify:
 ```bash
 claude
-# Type /scaffold, /onboard, /plan, or /review and hit Tab
+# Type any command: /scaffold /onboard /plan /review /migrate /debug /refactor /test /deploy /doc /api /component /secure /deps /perf
 ```
 
 ---
@@ -93,7 +123,25 @@ mkdir my-project && cd my-project && claude
 
 Claude will: clarify (if needed) → plan → wait for approval → implement phase-by-phase → verify → summarize.
 
-> `/scaffold` = new project | `/onboard` = existing project (deep analysis) | `/init` = quick CLAUDE.md (built-in)
+### Cheat Sheet
+
+| Command | What it does | Model |
+|---------|-------------|-------|
+| `/scaffold` | Generate new project from spec | Sonnet |
+| `/onboard` | Analyze existing project, generate CLAUDE.md | Opus |
+| `/plan` | Plan a feature/change before coding | Opus |
+| `/review` | Code review (diff, branch, PR, files) | Opus |
+| `/api` | Generate API endpoints + validation + tests | Sonnet |
+| `/component` | Generate UI components + props + tests | Sonnet |
+| `/test` | Generate tests for existing code | Sonnet |
+| `/debug` | Structured debugging with root cause analysis | Opus |
+| `/refactor` | Safe refactoring with behavior preservation | Sonnet |
+| `/migrate` | Framework or version migration | Opus |
+| `/deploy` | Generate Dockerfile, CI/CD, compose configs | Sonnet |
+| `/doc` | Generate API docs, architecture, README | Sonnet |
+| `/secure` | Security audit (OWASP, auth, secrets, deps) | Opus |
+| `/deps` | Audit, upgrade, clean up dependencies | Sonnet |
+| `/perf` | Profile and optimize performance | Opus |
 
 ---
 
@@ -140,29 +188,59 @@ Claude rates specs 1-3:
 
 ---
 
-## Model Selection
+## Token & Cost Comparison
 
-| Phase | Model | Why |
-|-------|-------|-----|
-| Planning/Analysis (`/plan`, `/onboard`, `/review`) | **Opus** | Deeper reasoning, better architecture |
-| Execution (`/scaffold` phases) | **Sonnet** | Faster, efficient for known patterns |
-| Complex debugging | **Opus** | Better root cause analysis |
-| Straightforward features | **Sonnet** | Speed advantage |
+### Default Claude Code vs Claude Architect
 
-Switch mid-session: `/model sonnet` or `/model opus`
+Task: scaffold a full-stack app (API + DB + auth + tests + deploy config)
 
----
+| | Default Claude Code | With Claude Architect |
+|--|--------------------|-----------------------|
+| **Tokens used** | ~50-80k | ~15-25k |
+| **Rework cycles** | 2-4 (wrong patterns, missing config) | 0-1 (framework-aware from start) |
+| **Conventions** | You explain every time | Auto-loaded from framework files |
+| **Error handling** | Generic or missing | Framework-idiomatic (from _base.md) |
+| **Project structure** | Random or ChatGPT-style | Matches framework best practices |
+| **CLAUDE.md** | You write manually | Generated with conventions + commands |
+| **Quality gates** | Hope for the best | Build + lint + test enforced per phase |
 
-## Token Optimization
+**Why fewer tokens:** Protocols eliminate back-and-forth. Framework files eliminate "use X pattern" instructions. Clarification-first prevents rework. Phased execution prevents context bloat.
+
+### Sonnet vs Opus Usage
+
+| | Sonnet | Opus |
+|--|--------|------|
+| **Speed** | ~3x faster output | Slower, more deliberate |
+| **Cost** | Lower per token | Higher per token |
+| **Best for** | Pattern-based execution, templates, formulaic tasks | Reasoning, analysis, architecture, debugging |
+| **Commands** | `/scaffold` `/refactor` `/test` `/deploy` `/doc` `/api` `/component` `/deps` | `/plan` `/review` `/onboard` `/debug` `/migrate` `/secure` `/perf` |
+
+**Recommended workflow:** Start session with Opus for planning/analysis, switch to Sonnet for execution.
+```
+/model opus    → /plan, /review, /onboard, /debug
+/model sonnet  → /scaffold, /test, /deploy, /api, /component
+```
+
+### Token Budget by Task
+
+| Task | Tokens (with Claude Architect) | Without Claude Architect |
+|------|------------------------|-------------------|
+| Scaffold full-stack app | ~15-25k | ~50-80k |
+| Onboard existing project | ~8-12k | ~20-30k (manual CLAUDE.md) |
+| Plan a feature | ~3-5k | ~5-10k |
+| Code review | ~3-6k | ~5-10k |
+| Generate API endpoints | ~5-10k | ~15-25k |
+| Generate tests | ~5-10k | ~10-20k |
+| Debug a bug | ~5-10k | ~10-30k |
+| Security audit | ~5-8k | ~15-25k |
+| Deploy config | ~3-6k | ~8-15k |
+
+**Savings come from:** no convention re-explaining (~2-5k saved per task), no rework from wrong patterns (~5-15k saved), structured protocols prevent rambling (~3-8k saved).
+
+### Token Optimization Tips
 
 **Do:** Use constraints, reference existing files by path, `/clear` every 3-4 interactions, re-anchor with `Read CLAUDE.md and Plan.md`
 **Don't:** Vague prompts, @-import large files, let context grow past 5 phases
-
-| Approach | Tokens | Quality |
-|----------|--------|---------|
-| Vague, no plan, fix as you go | ~50k | Inconsistent |
-| Structured spec, no plan review | ~25k | Good |
-| **Structured spec + plan review + phased** | **~15k** | **Consistent** |
 
 ---
 
@@ -174,9 +252,9 @@ Edit `~/.claude/CLAUDE.md` (keep under 50 lines).
 ### Stack-Specific Commands
 Create custom commands in `~/.claude/commands/`:
 ```bash
-cat > ~/.claude/commands/component.md << 'EOF'
-Create a new React component: $ARGUMENTS
-Rules: ComponentName/index.tsx + types.ts, Tailwind, Storybook story, unit test
+cat > ~/.claude/commands/seed.md << 'EOF'
+Generate seed data for: $ARGUMENTS
+Rules: Use Faker, match existing model schemas, 50 records per entity, idempotent
 EOF
 ```
 
@@ -206,6 +284,42 @@ Claude will: detect stack → analyze structure + patterns → report → genera
 
 ---
 
+## Command Workflows
+
+Common command chains for typical development tasks:
+
+### New Project → Production
+```
+/scaffold → /test → /deploy → /doc
+```
+
+### Onboard Existing Project
+```
+/onboard → /secure → /deps → /review
+```
+
+### Bug Fix
+```
+/debug → fix → /test → /review
+```
+
+### New Feature
+```
+/plan → /api or /component → /test → /review
+```
+
+### Pre-Release
+```
+/deps → /secure → /perf → /deploy
+```
+
+### Major Upgrade
+```
+/migrate → /test → /secure → /deploy
+```
+
+---
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -225,7 +339,7 @@ Claude will: detect stack → analyze structure + patterns → report → genera
 ~/.claude/
 ├── CLAUDE.md                     ← global defaults
 └── commands/
-    ├── scaffold.md onboard.md plan.md review.md
+    ├── scaffold.md onboard.md plan.md review.md migrate.md debug.md refactor.md test.md deploy.md doc.md api.md component.md secure.md deps.md perf.md
     └── frameworks/
         ├── _index.md             ← detection matrix
         ├── typescript/           ← _base + nextjs, react, vue, nuxt, svelte, sveltekit, nestjs, astro, remix, api

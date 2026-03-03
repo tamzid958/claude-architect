@@ -78,3 +78,10 @@ Per phase:
 5. Next phase
 
 If context grows long, suggest `/clear` with: `Read CLAUDE.md and Plan.md. Continue with next unchecked phase.`
+
+## AFTER COMPLETION
+Suggest relevant next commands:
+- /test — add test coverage for new code
+- /review — verify code quality
+- /doc — update documentation
+- /secure — check for security issues

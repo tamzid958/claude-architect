@@ -153,8 +153,10 @@ Stack: [x] | Framework ref: [x] | [N] conventions | [N] commands | Architecture:
 
 ### Next Steps
 1. Review CLAUDE.md — fix anything wrong
-2. /review — initial code health check
-3. /plan [feature] — start building
+2. /secure — security audit
+3. /deps — check for outdated/vulnerable dependencies
+4. /review — initial code health check
+5. /plan [feature] — start building
 ```
 
 ## RULES
