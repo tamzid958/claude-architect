@@ -4,309 +4,162 @@ allowed-tools: Bash(*), Edit(**)
 
 Onboard this existing project for Claude Architect: $ARGUMENTS
 
-# CLAUDE ARCHITECT — ONBOARDING PROTOCOL
+# ONBOARDING PROTOCOL
 
-You are onboarding an existing codebase so Claude can work on it effectively. Follow this protocol exactly.
-
-## STEP 1: ANALYZE THE PROJECT
-
-Scan the project systematically. Do NOT modify anything yet.
+## STEP 1: ANALYZE (read-only — modify nothing)
 
 ### 1a. Detect Stack
+Check package/config files. Use **frameworks/_index.md** detection matrix to identify language, framework. Read the matched framework reference file.
+
+Extract: Language + version | Framework + version | Package manager | Key dependencies
+
+### 1b. Map Structure
 ```bash
-# Check for package/config files to identify the stack
-ls -la
-cat package.json 2>/dev/null || cat requirements.txt 2>/dev/null || cat pyproject.toml 2>/dev/null || cat go.mod 2>/dev/null || cat Cargo.toml 2>/dev/null || cat composer.json 2>/dev/null || cat *.csproj 2>/dev/null || cat pom.xml 2>/dev/null || cat build.gradle 2>/dev/null
+find . -maxdepth 3 -type f | grep -v 'node_modules\|.git\|__pycache__\|.next\|dist\|build\|vendor\|target\|.gradle\|Pods\|.dart_tool' | head -80
 ```
-
-Extract:
-- **Language + version**
-- **Framework + version**
-- **Package manager**
-- **Key dependencies**
-
-### 1b. Map the Structure
-```bash
-# Get directory tree (2 levels deep, ignore noise)
-find . -maxdepth 3 -type f | grep -v node_modules | grep -v .git | grep -v __pycache__ | grep -v .next | grep -v dist | grep -v build | grep -v vendor | grep -v target | head -80
-```
-
-Identify:
-- **Entry point(s)** — where does the app start?
-- **Source directories** — where does code live?
-- **Test directories** — where are tests? What framework?
-- **Config files** — what tools are configured?
-- **Build output** — what's generated vs. source?
+Identify: entry point(s), source dirs, test dirs, config files, build output
 
 ### 1c. Detect Patterns
-Read 3-5 representative source files to identify:
-- **Code style** — indentation, naming conventions, import style
-- **Architecture pattern** — MVC, Clean Architecture, feature-based, flat?
-- **Error handling pattern** — how are errors handled?
-- **Testing pattern** — unit tests, integration tests, test naming?
-- **State management** — how is state/data managed?
+Read 3-5 representative source files. Cross-reference with framework reference file.
+Identify: code style, architecture pattern, error handling, testing pattern, state management
 
 ### 1d. Find Commands
+Check: package.json scripts, Makefile, pyproject.toml [tool.*], Taskfile, Rakefile, build.gradle, Justfile
+Identify: dev, build, test (full + single), lint, migrations, other
+If not found, use defaults from matched framework reference file.
+
+### 1e. Git State
 ```bash
-# Check for scripts/commands
-cat package.json 2>/dev/null | grep -A 30 '"scripts"' || \
-cat Makefile 2>/dev/null | grep '^[a-zA-Z]' || \
-cat pyproject.toml 2>/dev/null | grep -A 20 '\[tool\.' || \
-cat Taskfile.yml 2>/dev/null | head -40
+git status && git log --oneline -10 && git branch -a
 ```
 
-Identify:
-- **Dev command** — how to run locally
-- **Build command** — how to build for production
-- **Test command** — how to run tests (full suite + single test)
-- **Lint command** — how to lint/format
-- **Other commands** — migrations, seed, deploy, etc.
-
-### 1e. Check Git State
-```bash
-git status
-git log --oneline -10
-git branch -a
-```
-
-## STEP 2: OUTPUT ANALYSIS REPORT
-
-Show the user what you found before generating anything:
+## STEP 2: ANALYSIS REPORT (before generating anything)
 
 ```
-## 🔍 Project Analysis: [detected name]
+## Project Analysis: [name]
 
 ### Stack
-- Language: [language + version]
-- Framework: [framework + version]
-- Package manager: [manager]
-- Key deps: [top 5-8 dependencies]
+Language: [x] | Framework: [x] | PM: [x] | Key deps: [top 5-8]
+Framework ref: frameworks/[lang]/[framework].md
 
 ### Structure
-[directory tree — key directories with purpose annotations]
+[annotated directory tree]
 
 ### Detected Patterns
-- Architecture: [pattern]
-- Code style: [key observations — indentation, naming, etc.]
-- Error handling: [pattern]
-- Testing: [framework, location, naming convention]
+Architecture: [x] | Code style: [x] | Error handling: [x] | Testing: [x]
 
-### Commands Found
-- Dev: `[command]`
-- Build: `[command]`
-- Test: `[command]`
-- Lint: `[command]`
+### Commands
+Dev: `x` | Build: `x` | Test: `x` | Lint: `x`
 
-### Git Status
-- Branch: [current branch]
-- Clean: [yes/no]
-- Recent activity: [last 3 commits summarized]
+### Git: Branch [x] | Clean: [y/n] | Recent: [last 3 commits]
 
-### Potential Issues
-- [anything missing — no tests, no linter, no .gitignore, etc.]
-- [inconsistencies found]
+### Issues Found
+- [missing tests/linter/.gitignore]
+- [deviations from framework best practices]
 
-I'll now generate CLAUDE.md and project docs based on this analysis. Proceed?
+I'll generate CLAUDE.md and docs based on this. Proceed?
 ```
 
-## STEP 3: GENERATE CLAUDE.md
+## STEP 3: INSTALL GLOBAL CLAUDE.md
 
-After user approval, create a project-level CLAUDE.md based on the analysis:
+Check `~/.claude/CLAUDE.md`:
+- **Missing** → install from global-CLAUDE.md template
+- **Exists** → compare, show diff, ask: merge / keep yours / replace
+
+## STEP 4: GENERATE PROJECT CLAUDE.md
+
+Combine: framework conventions (from reference file) + project-specific overrides (from analysis).
 
 ```markdown
 # [Project Name]
 
 ## What
-[One line — inferred from package.json description, README, or code analysis]
+[One line — from package.json description, README, or analysis]
 
 ## Stack
-[Language + framework + key deps with detected versions]
+[Language + framework + key deps — detected versions]
 
 ## Commands
-- `[dev command]` — start dev server / run locally
-- `[build command]` — production build / compile
-- `[test command]` — run full test suite
-- `[single test command]` — run one test file
-- `[lint command]` — lint + format check
-[any other detected commands]
+- `[dev]` — run locally
+- `[build]` — production build
+- `[test]` — full test suite
+- `[single-test]` — one test file
+- `[lint]` — lint + format
 
 ## Structure
-[Annotated directory layout — what each key directory does]
+[Annotated directory layout]
 
-## Conventions (detected from codebase)
-- [Naming convention — e.g., camelCase for variables, PascalCase for components]
-- [Import style — e.g., absolute imports from src/, barrel exports]
-- [Error handling pattern — e.g., custom AppError class, Result types]
-- [Testing pattern — e.g., tests co-located, __tests__/ directory, .spec naming]
-- [State/data pattern — e.g., repository pattern, hooks + context, Redux]
+## Conventions
+### [Framework]-Specific
+[From frameworks/[lang]/[framework].md Convention Block]
 
-## Architecture
-[Brief description of the architecture — e.g., "Clean Architecture with handler → service → repository layers"]
+### Project-Specific (detected)
+- [Naming convention]
+- [Import style]
+- [Error handling pattern]
+- [Testing pattern]
+- [State/data pattern]
 
 ## Key Files
-- [Entry point]: [path]
-- [Config]: [path]
-- [Routes/API]: [path]
-- [Database/Models]: [path]
-- [Shared types/utils]: [path]
+- Entry: [path]
+- Config: [path]
+- Routes/API: [path]
+- Models: [path]
 
 ## When Stuck
-- For [area], look at [path/to/example] as reference
-- For [area], see [path/to/docs] if available
+- For [area], look at [path] as reference
+- Framework ref: frameworks/[lang]/[framework].md
 ```
 
-## STEP 4: GENERATE PROJECT DOCS
+**Keep under 80 lines.** Details go in docs/.
 
-Create a `docs/` directory with progressive disclosure files:
+## STEP 5: GENERATE DOCS
 
-### docs/architecture.md
-```markdown
-# Architecture
+Create relevant docs/ files only:
 
-## Overview
-[2-3 sentences describing the overall architecture]
+**docs/architecture.md** — overview, layer diagram, key decisions, data flow
+**docs/conventions.md** — naming, file structure, error handling, testing patterns
+**docs/api-patterns.md** (if API) — endpoint structure, validation, response format, auth, errors
 
-## Layer Diagram
-[Text-based diagram showing the layers/modules and their relationships]
+Skip irrelevant docs (no api-patterns for CLIs, no architecture for simple scripts).
 
-## Key Design Decisions
-- [Decision 1 — inferred from code patterns]
-- [Decision 2]
-- [Decision 3]
+## STEP 6: HOOKS (optional)
 
-## Data Flow
-[How a request/action flows through the system — entry → processing → response]
+Offer if lint/test commands exist:
 ```
-
-### docs/conventions.md
-```markdown
-# Code Conventions
-
-## Naming
-- Files: [pattern — e.g., kebab-case, PascalCase]
-- Variables: [pattern]
-- Functions: [pattern]
-- Types/Interfaces: [pattern]
-- Constants: [pattern]
-
-## File Structure
-[How a typical file should be organized — imports, types, implementation, exports]
-
-## Error Handling
-[Detected error handling pattern with example reference]
-
-## Testing
-- Test location: [where tests live]
-- Naming: [convention — e.g., *.test.ts, *_test.go, Test* prefix]
-- Pattern: [e.g., AAA, Given-When-Then]
-- Mocking: [approach used]
-```
-
-### docs/api-patterns.md (if API project)
-```markdown
-# API Patterns
-
-## Endpoint Structure
-[Detected route/endpoint pattern with example]
-
-## Request Validation
-[How inputs are validated]
-
-## Response Format
-[Detected response envelope/format]
-
-## Authentication
-[Detected auth pattern]
-
-## Error Responses
-[How errors are returned to clients]
-```
-
-Only generate docs files that are relevant to the project type. Skip api-patterns.md for CLIs, skip architecture.md for simple scripts, etc.
-
-## STEP 5: SET UP HOOKS (optional)
-
-If the project has lint/test commands, offer to create hooks:
-
-```
-Want me to set up automatic quality checks?
-
-This will create .claude/hooks.json so Claude automatically:
+Want automatic quality checks? (.claude/hooks.json)
 - Runs [linter] after editing [file-types]
 - Runs build + test before commits
-
 Say "add hooks" or skip.
 ```
 
-If approved, generate `.claude/hooks.json`:
-```json
-{
-  "hooks": {
-    "post-edit": [
-      {
-        "command": "[detected lint-fix command] ${file}",
-        "pattern": "**/*.{[detected extensions]}"
-      }
-    ],
-    "pre-commit": [
-      {
-        "command": "[detected build command] && [detected test command]"
-      }
-    ]
-  }
-}
-```
+## STEP 7: PERMISSIONS (optional)
 
-## STEP 6: SET UP PERMISSIONS (optional)
+Offer permission allowlists for detected safe commands (.claude/settings.json).
 
-Offer to create permission allowlists based on detected commands:
+## STEP 8: SUMMARY
 
 ```
-Want me to set up permission allowlists so Claude doesn't ask for approval on routine commands?
+## Onboarded: [name]
 
-This will allow: [list of detected safe commands]
+### Generated
+- CLAUDE.md — conventions + commands
+- docs/architecture.md, docs/conventions.md [, docs/api-patterns.md]
+[- .claude/hooks.json, .claude/settings.json]
+[- ~/.claude/CLAUDE.md (if installed)]
 
-Say "add permissions" or skip.
+### What Claude Knows
+Stack: [x] | Framework ref: [x] | [N] conventions | [N] commands | Architecture: [x]
+
+### Next Steps
+1. Review CLAUDE.md — fix anything wrong
+2. /review — initial code health check
+3. /plan [feature] — start building
 ```
 
-If approved, generate `.claude/settings.json`.
-
-## STEP 7: OUTPUT SUMMARY
-
-```
-## ✅ Project Onboarded: [name]
-
-### Generated Files
-- CLAUDE.md — project conventions and commands
-- docs/architecture.md — system architecture overview
-- docs/conventions.md — code style and patterns
-[- docs/api-patterns.md — API endpoint conventions (if applicable)]
-[- .claude/hooks.json — automatic quality checks (if approved)]
-[- .claude/settings.json — permission allowlists (if approved)]
-
-### What Claude Now Knows
-- Stack: [summary]
-- [N] conventions detected
-- [N] commands mapped
-- Architecture: [pattern]
-
-### Available Commands
-- `/plan [feature]` — plan a new feature before building it
-- `/review` — review code for bugs, security, and style
-- `/scaffold` — add new modules to this project
-
-### Recommended First Steps
-1. Review CLAUDE.md and fix anything I got wrong
-2. Run `/review` to get an initial code health check
-3. Start building: `/plan [your next feature]`
-```
-
-## ONBOARDING RULES
-
-- **Never modify existing source code** during onboarding
-- **Only create new files** (CLAUDE.md, docs/, .claude/)
-- **If CLAUDE.md already exists**, read it, merge new findings, and ask before overwriting
-- **If docs/ already exists**, don't overwrite — add new files alongside or ask
-- **Prefer detected patterns over assumed defaults** — if the project uses tabs, don't suggest spaces
-- **Be honest about uncertainty** — if you can't determine a pattern, say so rather than guessing
-- **Keep CLAUDE.md under 80 lines** — put details in docs/ files
+## RULES
+- **Never modify source code** during onboarding — only create CLAUDE.md, docs/, .claude/
+- **If CLAUDE.md exists** → read, merge findings, ask before overwrite
+- **Detected patterns > assumed defaults** — follow the codebase, not the template
+- **Framework refs are guides, not gospel** — codebase contradicts ref → follow codebase
+- **Be honest about uncertainty** — say "unclear" rather than guess

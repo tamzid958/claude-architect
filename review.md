@@ -4,105 +4,89 @@ allowed-tools: Bash(cat:*), Bash(ls:*), Bash(find:*), Bash(git log:*), Bash(git 
 
 Review code: $ARGUMENTS
 
-# CLAUDE ARCHITECT — CODE REVIEW PROTOCOL
+# CODE REVIEW PROTOCOL
 
-## STEP 1: DETERMINE SCOPE
+## STEP 1: SCOPE
 
-Figure out what to review based on $ARGUMENTS:
+Determine from $ARGUMENTS:
+- **No args** → uncommitted changes (`git diff` + `git diff --staged`)
+- **Branch** → diff vs main/master (`git diff main...[branch]`)
+- **File path(s)** → specific files
+- **"last commit"** → `git show HEAD`
+- **PR number** → `gh pr diff [number]` if gh available
 
-- **No arguments** → review uncommitted changes (`git diff` + `git diff --staged`)
-- **Branch name** → diff against main/master (`git diff main...[branch]`)
-- **File path(s)** → review specific files
-- **"last commit"** → review the most recent commit (`git show HEAD`)
-- **PR number** → if gh CLI is available, fetch PR diff
+If unclear, ask what to review.
 
-If the scope is unclear, ask:
-```
-What should I review?
-1. Uncommitted changes (git diff)
-2. Current branch vs main
-3. A specific file or directory
-4. Last N commits
-```
+## STEP 2: CONTEXT
 
-## STEP 2: READ CONTEXT
-
-Before reviewing, load:
+Load before reviewing:
 - CLAUDE.md (project conventions)
-- The files being changed AND their surrounding context (imports, tests, related files)
-- Recent git log for context on what's been happening
+- Changed files + surrounding context (imports, tests, related files)
+- Matched framework reference file from frameworks/ — check its Pitfalls section
+- Recent git log for change context
 
 ## STEP 3: REVIEW
 
-Analyze the code across these dimensions. **Only flag real issues — don't nitpick.**
+**Only flag real issues — no nitpicking.**
 
-### 🔴 Bugs & Correctness (always flag)
+### Red — Bugs & Correctness (always flag)
 - Logic errors, off-by-one, null/undefined access
 - Race conditions, missing await, unhandled promises
-- Wrong variable/function used
-- Missing edge cases that would cause runtime failures
+- Wrong variable/function, missing edge cases causing runtime failures
 
-### 🟡 Security (always flag)
-- Hardcoded secrets, API keys, credentials
-- SQL injection, XSS, CSRF vulnerabilities
-- Missing input validation on user-facing endpoints
-- Insecure dependencies (if obvious)
+### Yellow — Security (always flag)
+- Hardcoded secrets/keys/credentials
+- Injection (SQL, XSS, CSRF), missing input validation
 - Missing auth/authorization checks
+- Framework-specific pitfalls (from reference file's Pitfalls section)
 
-### 🟡 Performance (flag if significant)
-- N+1 queries, missing indexes
-- Unnecessary re-renders, missing memoization (if impactful)
-- Large allocations in hot paths
-- Missing pagination on list endpoints
+### Yellow — Performance (flag if significant)
+- N+1 queries, missing indexes, missing pagination
+- Unnecessary re-renders, large allocations in hot paths
 
-### 🔵 Design & Maintainability (flag if notable)
-- Violations of project conventions (from CLAUDE.md)
-- Dead code, unused imports
-- Missing error handling
-- Functions doing too many things
-- Missing types/interfaces where the project uses them
+### Blue — Design (flag if notable)
+- Violations of CLAUDE.md conventions
+- Dead code, unused imports, missing error handling
+- Functions doing too many things, missing types
 
-### ⚪ Style (only flag if violates CLAUDE.md conventions)
-- Don't flag style preferences unless they contradict project conventions
-- Don't suggest refactors unrelated to the change
+### White — Style (only if violates CLAUDE.md)
+- Don't flag personal preferences
+- Don't suggest unrelated refactors
 
 ## STEP 4: OUTPUT
 
-Format the review as:
-
 ```
-## Code Review: [scope description]
+## Code Review: [scope]
 
 ### Summary
-[1-2 sentences — overall assessment: looks good / needs changes / has critical issues]
+[1-2 sentences — overall: looks good / needs changes / critical issues]
 
-### 🔴 Must Fix
-[numbered list — bugs and security issues that need fixing before merge]
+### Red — Must Fix
+[numbered — bugs + security, with file:line + why + suggested fix]
 
-### 🟡 Should Fix
-[numbered list — performance, security hardening, missing validation]
+### Yellow — Should Fix
+[numbered — perf, security hardening, missing validation]
 
-### 🔵 Suggestions
-[numbered list — design improvements, nice-to-haves]
+### Blue — Suggestions
+[numbered — design improvements]
 
-### ✅ What Looks Good
-[2-3 things done well — positive reinforcement is useful]
+### Green — What Looks Good
+[2-3 positives]
 ```
 
 ## REVIEW RULES
+- **Specific:** file path + line context for every issue
+- **Explain why:** consequence, not just "this is wrong"
+- **Suggest fixes:** show the fix or describe approach
+- **Prioritize:** Red > Yellow > Blue — don't bury bugs under nits
+- **Proportional:** 5-line change doesn't need 20 suggestions
+- **No false positives:** unsure = "potential issue", not "bug"
+- **Framework pitfalls:** cross-reference the Pitfalls section of the matched framework reference
 
-- **Be specific:** Include file path + line context for every issue
-- **Explain why:** Don't just say "this is wrong" — explain the consequence
-- **Suggest fixes:** For each issue, show the fix or describe the approach
-- **Prioritize:** 🔴 > 🟡 > 🔵 — don't bury critical bugs under style nits
-- **Be proportional:** A 5-line change doesn't need 20 suggestions
-- **Respect conventions:** Only flag style issues that violate CLAUDE.md, not personal preference
-- **No false positives:** If you're not sure something is a bug, say "potential issue" not "bug"
+## AUTO-FIX
 
-## AFTER REVIEW
-
-If the user says "fix it" or "apply fixes":
-1. Fix only 🔴 and 🟡 items (unless user says otherwise)
-2. Run build + lint + test after fixes
-3. Show a summary of what was changed
-4. Don't touch code that wasn't flagged in the review
+If user says "fix it" / "apply fixes":
+1. Fix Red + Yellow only (unless told otherwise)
+2. Run build + lint + test
+3. Show summary of changes
+4. Don't touch unflagged code
